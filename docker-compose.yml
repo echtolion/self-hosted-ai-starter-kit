@@ -28,6 +28,8 @@ x-n8n: &service-n8n
 
 x-ollama: &service-ollama
   image: ollama/ollama:latest
+  # Add a consistent internal hostname regardless of profile
+  hostname: ollama
   container_name: ollama
   networks: ['AI-Stack']
   restart: unless-stopped
