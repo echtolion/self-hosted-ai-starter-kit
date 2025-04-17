@@ -28,4 +28,15 @@
     reverse_proxy ollama:11434
 }
 
+# Qdrant service
+# Use the QDRANT_HOSTNAME environment variable from .env
+{$QDRANT_HOSTNAME} {
+	# Enable compression
+	encode gzip zstd
+
+	# Reverse proxy requests to the Qdrant container
+	# Assumes qdrant service name is 'qdrant' and it listens on port 6333 internally
+	reverse_proxy qdrant:6333
+}
+
 # Add other service configurations below as needed
