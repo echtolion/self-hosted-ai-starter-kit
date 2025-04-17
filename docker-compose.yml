@@ -3,13 +3,15 @@ volumes:
   postgres_storage:
   ollama_storage:
   qdrant_storage:
+  caddy_data:
+  caddy_config:
 
 networks:
-  demo:
+  AI-Stack:
 
 x-n8n: &service-n8n
   image: n8nio/n8n:latest
-  networks: ['demo']
+  networks: ['AI-Stack']
   environment:
     - DB_TYPE=postgresdb
     - DB_POSTGRESDB_HOST=postgres
@@ -20,13 +22,14 @@ x-n8n: &service-n8n
     - N8N_ENCRYPTION_KEY
     - N8N_USER_MANAGEMENT_JWT_SECRET
     - OLLAMA_HOST=ollama:11434
+    - WEBHOOK_URL=${WEBHOOK_URL}
   env_file:
     - .env
 
 x-ollama: &service-ollama
   image: ollama/ollama:latest
   container_name: ollama
-  networks: ['demo']
+  networks: ['AI-Stack']
   restart: unless-stopped
   ports:
     - 11434:11434
@@ -35,7 +38,7 @@ x-ollama: &service-ollama
 
 x-init-ollama: &init-ollama
   image: ollama/ollama:latest
-  networks: ['demo']
+  networks: ['AI-Stack']
   container_name: ollama-pull-llama
   volumes:
     - ollama_storage:/root/.ollama
@@ -50,7 +53,7 @@ services:
   postgres:
     image: postgres:16-alpine
     hostname: postgres
-    networks: ['demo']
+    networks: ['AI-Stack']
     restart: unless-stopped
     environment:
       - POSTGRES_USER
@@ -83,8 +86,7 @@ services:
     hostname: n8n
     container_name: n8n
     restart: unless-stopped
-    ports:
-      - 5678:5678
+    # Ports removed, Caddy will handle external access
     volumes:
       - n8n_storage:/home/node/.n8n
       - ./n8n/backup:/backup
@@ -95,11 +97,30 @@ services:
       n8n-import:
         condition: service_completed_successfully
 
+  caddy:
+    image: caddy:latest
+    hostname: caddy
+    container_name: caddy
+    restart: unless-stopped
+    networks: ['AI-Stack']
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp" # For HTTP/3
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    env_file:
+      - .env # Make .env variables available to Caddyfile
+    depends_on:
+      - n8n
+
   qdrant:
     image: qdrant/qdrant
     hostname: qdrant
     container_name: qdrant
-    networks: ['demo']
+    networks: ['AI-Stack']
     restart: unless-stopped
     ports:
       - 6333:6333

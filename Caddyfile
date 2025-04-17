@@ -1,0 +1,31 @@
+{
+    # Global options block
+    # Use the LETSENCRYPT_EMAIL environment variable from .env
+    email {$LETSENCRYPT_EMAIL}
+    # Enable debugging if needed:
+    # debug
+}
+
+# n8n service
+# Use the N8N_HOST environment variable from .env
+{$N8N_HOST} {
+    # Enable compression
+    encode gzip zstd
+
+    # Reverse proxy requests to the n8n container
+    # Assumes n8n service name is 'n8n' and it listens on port 5678 internally
+    reverse_proxy n8n:5678
+}
+
+# Ollama service
+# Use the OLLAMA_HOSTNAME environment variable from .env
+{$OLLAMA_HOSTNAME} {
+    # Enable compression
+    encode gzip zstd
+
+    # Reverse proxy requests to the Ollama container
+    # Assumes ollama service/container name is 'ollama' and listens on 11434
+    reverse_proxy ollama:11434
+}
+
+# Add other service configurations below as needed
